@@ -42,7 +42,12 @@
         <input type="text" id="cari-sekolah" placeholder="Cari nama sekolah... (Tekan Enter)">
 
         <span id="jumlah" style="font-size: 14px;"></span>
-        <a href="{{ route('admin.sekolah.index') }}">Kelola Data</a>
+        @auth
+        <a href="{{ route('dashboard') }}">Dashboard</a>
+        @else
+        <a href="{{ route('login') }}">Masuk</a>
+        @endauth
+
     </header>
 
     <div id="map"></div>
@@ -115,11 +120,16 @@
                 const [lng, lat] = fitur.geometry.coordinates;
 
                 layer.bindPopup(`
+                     ${p.logo ? '<img src="' + esc(p.logo) + '" style="height:48px;margin-bottom:4px"><br>' : ''}
+                    <strong>${esc(p.nama)}</strong><br>
                     <strong>${esc(p.nama)}</strong><br>
                     NPSN: ${esc(p.npsn)}<br>
                     ${esc(p.jenjang)} ${esc(p.status)}<br>
                     ${esc(p.alamat)}, ${esc(p.kecamatan)}<br>
                     Telp: ${esc(p.telepon) || '-'}<br>
+                    Kepala Sekolah: ${esc(p.kepala_sekolah) || '-'}<br>
+                    Akreditasi: ${esc(p.akreditasi) || '-'}<br>
+                    Siswa: ${p.jumlah_siswa ?? '-'} | Guru: ${p.jumlah_guru ?? '-'}<br>
                     <small>Koordinat: ${lat}, ${lng}</small>
                 `);
 

@@ -33,6 +33,11 @@ class PetaController extends Controller
                     'alamat' => $s->alamat,
                     'kecamatan' => $s->kecamatan,
                     'telepon' => $s->telepon,
+                    'kepala_sekolah' => $s->profil?->kepala_sekolah,
+                    'akreditasi' => $s->profil?->akreditasi,
+                    'jumlah_siswa' => $s->profil?->jumlah_siswa,
+                    'jumlah_guru' => $s->profil?->jumlah_guru,
+                    'logo' => $s->profil?->logoUrl(),
                 ],
             ]);
 
