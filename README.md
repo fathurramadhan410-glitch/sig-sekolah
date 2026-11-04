@@ -22,15 +22,15 @@
 
 | | |
 |---|---|
-| **Nama** | [Nama Lengkap Anda] |
-| **NIM** | [NIM Anda] |
-| **Kelas** | [Kelas Anda] |
-| **Program Studi** | [Nama Program Studi] |
-| **Fakultas** | [Nama Fakultas] |
-| **Perguruan Tinggi** | [Nama Kampus] |
-| **Mata Kuliah** | Sistem Informasi Geografis (Praktikum Lanjutan) |
-| **Dosen Pengampu** | [Nama Dosen] |
-| **Tahun Akademik** | [Contoh: 2026/2027] |
+| **Nama** | Fathur Ramadhan |
+| **NIM** | C050425007 |
+| **Kelas** | SIKC 3B |
+| **Program Studi** | Sistem Informasi Kota Cerdas |
+| **Jurusan** | Teknik Elektro |
+| **Perguruan Tinggi** | Politeknik Negeri Banjarmasin |
+| **Mata Kuliah** | Pemrograman Berbasis Web |
+| **Dosen Pengampu** | Arifin Noor Asyikin, S.T.,M.T. |
+| **Tahun Akademik** | [2026/2027] |
 
 ---
 
