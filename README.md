@@ -1,6 +1,8 @@
 <div align="center">
 <img src="docs/logo-kampus.png" width="120" alt="Logo Kampus">
-# 🗺️ SIG SEKOLAH
+
+
+🗺️ SIG SEKOLAH
 
 ### Peta Digital Pendidikan yang Aman, Terpadu, dan Terpercaya
 
