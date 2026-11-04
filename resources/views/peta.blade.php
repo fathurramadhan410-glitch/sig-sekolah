@@ -21,7 +21,7 @@
 <body>
     <header>
         <h1>Peta Sekolah</h1>
-        
+
         <!-- Filter Jenjang -->
         <select id="filter-jenjang">
             <option value="">Semua Jenjang</option>
@@ -42,12 +42,12 @@
         <input type="text" id="cari-sekolah" placeholder="Cari nama sekolah... (Tekan Enter)">
 
         <span id="jumlah" style="font-size: 14px;"></span>
-        @auth
-        <a href="{{ route('dashboard') }}">Dashboard</a>
-        @else
-        <a href="{{ route('login') }}">Masuk</a>
-        @endauth
 
+        @auth
+            <a href="{{ route('dashboard') }}">Dashboard</a>
+        @else
+            <a href="{{ route('login') }}">Masuk</a>
+        @endauth
     </header>
 
     <div id="map"></div>
@@ -58,7 +58,7 @@
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
     <script>
-        // 1. Definisikan Peta Dasar (Base Maps) & Kontrol Layer
+        // 1. Peta dasar (Base Maps) dan kontrol layer
         const osmLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
@@ -72,20 +72,19 @@
         const map = L.map('map', {
             center: [-3.3194, 114.5908],
             zoom: 12,
-            layers: [osmLayer] // Layer default
+            layers: [osmLayer]
         });
 
-        const baseMaps = {
+        L.control.layers({
             "OpenStreetMap": osmLayer,
             "Topografi": topographicLayer
-        };
-        L.control.layers(baseMaps).addTo(map);
+        }).addTo(map);
 
-        // 2. Inisialisasi Marker Cluster Group
+        // 2. Marker cluster
         const markersCluster = L.markerClusterGroup();
         map.addLayer(markersCluster);
 
-        // Objek untuk menyimpan referensi marker pencarian
+        // Referensi marker untuk pencarian
         let markerLayers = {};
 
         // Mencegah XSS
@@ -95,13 +94,13 @@
             return d.innerHTML;
         }
 
-        // 3. Konfigurasi GeoJSON dengan Warna Marker Berbeda Tiap Jenjang
+        // 3. GeoJSON dengan warna marker per jenjang
         const lapisan = L.geoJSON(null, {
             pointToLayer: function (feature, latlng) {
                 const jenjang = feature.properties.jenjang;
                 let warna = 'gray';
-                
-                if (jenjang === 'SD') warna = '#2563eb';      // Biru
+
+                if (jenjang === 'SD') warna = '#2563eb';       // Biru
                 else if (jenjang === 'SMP') warna = '#16a34a'; // Hijau
                 else if (jenjang === 'SMA') warna = '#d97706'; // Oranye
                 else if (jenjang === 'SMK') warna = '#dc2626'; // Merah
@@ -120,8 +119,7 @@
                 const [lng, lat] = fitur.geometry.coordinates;
 
                 layer.bindPopup(`
-                     ${p.logo ? '<img src="' + esc(p.logo) + '" style="height:48px;margin-bottom:4px"><br>' : ''}
-                    <strong>${esc(p.nama)}</strong><br>
+                    ${p.logo ? '<img src="' + esc(p.logo) + '" style="height:48px;margin-bottom:4px"><br>' : ''}
                     <strong>${esc(p.nama)}</strong><br>
                     NPSN: ${esc(p.npsn)}<br>
                     ${esc(p.jenjang)} ${esc(p.status)}<br>
@@ -130,23 +128,24 @@
                     Kepala Sekolah: ${esc(p.kepala_sekolah) || '-'}<br>
                     Akreditasi: ${esc(p.akreditasi) || '-'}<br>
                     Siswa: ${p.jumlah_siswa ?? '-'} | Guru: ${p.jumlah_guru ?? '-'}<br>
-                    <small>Koordinat: ${lat}, ${lng}</small>
+                    <small>Koordinat: ${lat}, ${lng}</small><br>
+                    <a href="{{ url('/sekolah') }}/${encodeURIComponent(p.id)}">Lihat profil lengkap</a>
                 `);
 
                 // Simpan untuk pencarian
                 markerLayers[p.nama.toLowerCase()] = { layer: layer, latlng: [lat, lng] };
 
-                // Tambahkan ke cluster group
+                // Tambahkan ke cluster
                 markersCluster.addLayer(layer);
             }
         });
 
-        // 4. Fungsi Muat Data Berdasarkan Filter
+        // 4. Muat data berdasarkan filter
         let currentJenjang = '';
         let currentStatus = '';
 
         async function muatData() {
-            const url = `{{ route('peta.data') }}?jenjang=${currentJenjang}&status=${currentStatus}`;
+            const url = `{{ route('peta.data') }}?jenjang=${encodeURIComponent(currentJenjang)}&status=${encodeURIComponent(currentStatus)}`;
             const respon = await fetch(url);
             const data = await respon.json();
 
@@ -163,7 +162,6 @@
             }
         }
 
-        // Event listener filter
         document.getElementById('filter-jenjang').addEventListener('change', (e) => {
             currentJenjang = e.target.value;
             muatData();
@@ -174,7 +172,7 @@
             muatData();
         });
 
-        // 5. Fitur Pencarian Nama Sekolah (Tekan Enter)
+        // 5. Pencarian nama sekolah (tekan Enter)
         document.getElementById('cari-sekolah').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 const keyword = this.value.toLowerCase().trim();
@@ -192,7 +190,7 @@
             }
         });
 
-        // Eksekusi awal saat halaman dimuat
+        // Eksekusi awal
         muatData();
     </script>
 </body>

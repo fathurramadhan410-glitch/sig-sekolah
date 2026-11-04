@@ -9,11 +9,14 @@ use App\Http\Controllers\ProfilSekolahController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\SekolahPublikController;
 
 // Publik
 Route::get('/', [PetaController::class, 'index'])->name('peta.index');
 Route::get('/data/sekolah', [PetaController::class, 'geojson'])
     ->name('peta.data');
+Route::get('/sekolah/{sekolah}', [SekolahPublikController::class, 'show'])
+    ->name('sekolah.show');
 
 // Tamu
 Route::middleware('guest')->group(function () {
@@ -58,4 +61,5 @@ Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])
         ->group(function () {
         Route::resource('users', UserController::class)->except('show');
     });
+
 });
