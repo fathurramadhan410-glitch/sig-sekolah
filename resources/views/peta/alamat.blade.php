@@ -1,0 +1,170 @@
+@extends('layouts.public')
+@section('title', 'Cek Lokasi')
+
+@section('content')
+<div class="toolbar">
+    <span>Klik di mana saja pada peta untuk melihat alamat dan sekolah terdekat.</span>
+    <button type="button" id="btn-lokasi"
+            style="padding: 4px 10px; background: #1e3a8a; color: #fff; border: 0; border-radius: 4px; cursor: pointer;">
+        Lokasi Saya
+    </button>
+</div>
+
+<div id="peta" class="peta"></div>
+
+<div id="hasil" class="panel"
+     style="top: 64px; right: 12px; width: 320px; max-height: 75%;
+            overflow: auto; display: none;"></div>
+@endsection
+
+@push('scripts')
+<script>
+    const map = Peta.buat('peta');
+    const lapisan = L.layerGroup().addTo(map);
+    const panel = document.getElementById('hasil');
+    let semua = [];
+    let terakhir = 0;
+
+    Peta.ambilSekolah().then((fitur) => { semua = fitur; });
+
+    function terdekat(titik, n = 3) {
+        return semua
+            .map((f) => ({ fitur: f, jarak: Peta.jarakKm(titik, Peta.latlng(f)) }))
+            .sort((a, b) => a.jarak - b.jarak)
+            .slice(0, n);
+    }
+
+    async function ambilAlamat(lat, lng) {
+        const url = 'https://nominatim.openstreetmap.org/reverse'
+            + '?format=jsonv2&addressdetails=1&accept-language=id'
+            + `&lat=${lat}&lon=${lng}`;
+
+        const respon = await fetch(url);
+        if (!respon.ok) throw new Error('HTTP ' + respon.status);
+
+        return respon.json();
+    }
+
+    async function prosesTitik(lat, lng) {
+        const titik = [lat, lng];
+        lapisan.clearLayers();
+
+        // Lingkaran radius 1 km (1000 meter) untuk analisis jangkauan
+        L.circle(titik, {
+            radius: 1000,
+            color: '#059669',
+            fillColor: '#10b981',
+            fillOpacity: 0.15,
+            weight: 2,
+        }).addTo(lapisan);
+
+        // Titik pusat klik / lokasi pengguna
+        L.circleMarker(titik, {
+            radius: 9, color: '#fff', weight: 3,
+            fillColor: '#ef4444', fillOpacity: 1,
+        }).addTo(lapisan);
+
+        // Hitung sekolah dalam radius 1 km
+        const dalamRadius = semua.filter((f) => Peta.jarakKm(titik, Peta.latlng(f)) <= 1.0);
+
+        const dekat = terdekat(titik);
+        dekat.forEach((d) => {
+            L.polyline([titik, Peta.latlng(d.fitur)], {
+                color: '#2563eb', weight: 2, dashArray: '6 6',
+            }).addTo(lapisan);
+        });
+
+        panel.style.display = 'block';
+        panel.textContent = 'Mencari alamat...';
+
+        let bagianAlamat = '<em>Alamat tidak dapat dimuat.</em>';
+        try {
+            const data = await ambilAlamat(lat, lng);
+            const a = data.address || {};
+
+            const baris = [
+                ['Jalan', a.road],
+                ['Kelurahan/Desa', a.suburb || a.neighbourhood || a.village],
+                ['Kota/Kabupaten', a.city || a.town || a.municipality || a.county],
+                ['Provinsi', a.state],
+                ['Kode pos', a.postcode],
+            ].map(([k, v]) => `
+                <tr>
+                    <td style="padding: 2px 8px 2px 0; color: #6b7280;">${k}</td>
+                    <td>${Peta.esc(v) || '-'}</td>
+                </tr>`).join('');
+
+            bagianAlamat = `
+                <p style="margin: 6px 0;">${Peta.esc(data.display_name || '-')}</p>
+                <table style="font-size: 13px;">${baris}</table>`;
+        } catch (err) {
+            console.error(err);
+        }
+
+        const daftar = dekat.map((d) => `
+            <li data-npsn="${Peta.esc(d.fitur.properties.npsn)}"
+                style="padding: 6px 0; border-top: 1px solid #e5e7eb; cursor: pointer;">
+                <strong>${Peta.esc(d.fitur.properties.nama)}</strong><br>
+                <small>${d.jarak.toFixed(2)} km (garis lurus)</small>
+            </li>`).join('');
+
+        panel.innerHTML = `
+            <strong>Koordinat</strong>
+            <div style="font-family: monospace;">${lat.toFixed(6)}, ${lng.toFixed(6)}</div>
+            <div style="margin-top: 8px; padding: 6px 8px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 4px; font-size: 13px;">
+                <strong>Analisis Jangkauan (1 km):</strong><br>
+                Ditemukan <strong>${dalamRadius.length}</strong> sekolah di dalam lingkaran hijau.
+            </div>
+            <strong style="display: block; margin-top: 8px;">Alamat</strong>
+            ${bagianAlamat}
+            <strong style="display: block; margin-top: 8px;">3 Sekolah terdekat</strong>
+            <ul style="list-style: none; margin: 4px 0 0; padding: 0;">${daftar}</ul>`;
+    }
+
+    map.on('click', (e) => {
+        const sekarang = Date.now();
+        if (sekarang - terakhir < 1200) return;
+        terakhir = sekarang;
+
+        prosesTitik(e.latlng.lat, e.latlng.lng);
+    });
+
+    document.getElementById('btn-lokasi').addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            alert('Browser Anda tidak mendukung fitur Geolocation.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-lokasi');
+        btn.disabled = true;
+        btn.textContent = 'Mencari posisi...';
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                btn.disabled = false;
+                btn.textContent = 'Lokasi Saya';
+                const { latitude, longitude } = pos.coords;
+                map.flyTo([latitude, longitude], 15);
+                prosesTitik(latitude, longitude);
+            },
+            (err) => {
+                btn.disabled = false;
+                btn.textContent = 'Lokasi Saya';
+                alert('Gagal mendapatkan lokasi Anda: ' + err.message);
+            },
+            { enableHighAccuracy: true }
+        );
+    });
+
+    panel.addEventListener('click', (e) => {
+        const li = e.target.closest('[data-npsn]');
+        if (!li) return;
+
+        const f = semua.find((x) => x.properties.npsn === li.dataset.npsn);
+        if (f) {
+            L.popup().setLatLng(Peta.latlng(f)).setContent(Peta.popup(f)).openOn(map);
+            map.flyTo(Peta.latlng(f), 17);
+        }
+    });
+</script>
+@endpush

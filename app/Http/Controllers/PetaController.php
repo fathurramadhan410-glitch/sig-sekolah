@@ -3,13 +3,44 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sekolah;
+use App\Support\Geometri;
 use Illuminate\Http\Request;
 
 class PetaController extends Controller
 {
     public function index()
     {
-        return view('peta');
+        return view('peta.index');
+    }
+
+    public function cari()
+    {
+        return view('peta.cari');
+    }
+
+    public function klaster()
+    {
+        return view('peta.klaster');
+    }
+
+    public function panas()
+    {
+        return view('peta.panas');
+    }
+
+    public function wilayah()
+    {
+        return view('peta.wilayah');
+    }
+
+    public function rute()
+    {
+        return view('peta.rute');
+    }
+
+    public function alamat()
+    {
+        return view('peta.alamat');
     }
 
     public function geojson(Request $request)
@@ -17,6 +48,14 @@ class PetaController extends Controller
         $features = Sekolah::with('profil')
             ->when($request->jenjang, fn ($q, $j) => $q->where('jenjang', $j))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->bbox, function ($q, $bbox) {
+                $koordinat = explode(',', $bbox);
+                if (count($koordinat) === 4) {
+                    [$minLng, $minLat, $maxLng, $maxLat] = array_map('floatval', $koordinat);
+                    $q->whereBetween('longitude', [$minLng, $maxLng])
+                      ->whereBetween('latitude', [$minLat, $maxLat]);
+                }
+            })
             ->get()
             ->map(fn ($s) => [
                 'type' => 'Feature',
@@ -44,6 +83,49 @@ class PetaController extends Controller
 
         return response()->json([
             'type' => 'FeatureCollection',
+            'features' => $features,
+        ]);
+    }
+
+    public function geojsonWilayah(Request $request)
+    {
+        $features = Sekolah::with('profil')
+            ->when($request->jenjang, fn ($q, $j) => $q->where('jenjang', $j))
+            ->get()
+            ->groupBy('kecamatan')
+            ->map(function ($kelompok, $kecamatan) {
+                $titik = $kelompok
+                    ->map(fn ($s) => [$s->longitude, $s->latitude])
+                    ->all();
+
+                $hull = Geometri::convexHull($titik);
+
+                if (count($hull) < 3) {
+                    return null;
+                }
+
+                $hull[] = $hull[0];
+
+                return [
+                    'type' => 'Feature',
+                    'geometry' => [
+                        'type' => 'Polygon',
+                        'coordinates' => [$hull],
+                    ],
+                    'properties' => [
+                        'kecamatan'      => $kecamatan,
+                        'jumlah_sekolah' => $kelompok->count(),
+                        'jumlah_siswa'   => (int) $kelompok->sum(
+                            fn ($s) => $s->profil?->jumlah_siswa ?? 0
+                        ),
+                    ],
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'type'     => 'FeatureCollection',
             'features' => $features,
         ]);
     }

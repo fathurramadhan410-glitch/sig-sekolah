@@ -12,9 +12,19 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SekolahPublikController;
 
 // Publik
-Route::get('/', [PetaController::class, 'index'])->name('peta.index');
-Route::get('/data/sekolah', [PetaController::class, 'geojson'])
-    ->name('peta.data');
+Route::controller(PetaController::class)->group(function () {
+    Route::get('/', 'index')->name('peta.index');
+    Route::get('/pencarian', 'cari')->name('peta.cari');
+    Route::get('/data/sekolah', 'geojson')->name('peta.data');
+    Route::get('/klaster', 'klaster')->name('peta.klaster');
+    Route::get('/peta-panas', 'panas')->name('peta.panas');
+    Route::get('/wilayah', 'wilayah')->name('peta.wilayah');
+    Route::get('/data/wilayah', 'geojsonWilayah')->name('peta.data.wilayah');
+    Route::get('/rute', 'rute')->name('peta.rute');
+    Route::get('/alamat', 'alamat')->name('peta.alamat');
+
+});
+
 Route::get('/sekolah/{sekolah}', [SekolahPublikController::class, 'show'])
     ->name('sekolah.show');
 
@@ -32,10 +42,12 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
     Route::get('/dashboard', DashboardController::class)
         ->name('dashboard');
-Route::get('/kata-sandi', [PasswordController::class, 'edit'])->name('password.edit');
-Route::put('/kata-sandi', [PasswordController::class, 'update'])->name('password.update');
-Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])
-    ->middleware('role:admin,dinas')->name('log.index');
+    Route::get('/kata-sandi', [PasswordController::class, 'edit'])
+        ->name('password.edit');
+    Route::put('/kata-sandi', [PasswordController::class, 'update'])
+        ->name('password.update');
+    Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])
+        ->middleware('role:admin,dinas')->name('log.index');
 
     // Dinas: daftar, tambah, dan hapus sekolah
     Route::middleware('role:dinas')->prefix('dinas')->name('dinas.')
@@ -50,16 +62,15 @@ Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])
             ->name('sekolah.edit');
         Route::put('sekolah/{sekolah}', [SekolahController::class, 'update'])
             ->name('sekolah.update');
-        Route::get('sekolah/{sekolah}/profil',
-        [ProfilSekolahController::class, 'edit'])->name('sekolah.profil.edit');
-        Route::put('sekolah/{sekolah}/profil',
-        [ProfilSekolahController::class, 'update'])->name('sekolah.profil.update');
+        Route::get('sekolah/{sekolah}/profil', [ProfilSekolahController::class, 'edit'])
+            ->name('sekolah.profil.edit');
+        Route::put('sekolah/{sekolah}/profil', [ProfilSekolahController::class, 'update'])
+            ->name('sekolah.profil.update');
     });
 
     // Admin: kelola pengguna
     Route::middleware('role:admin')->prefix('admin')->name('admin.')
         ->group(function () {
-        Route::resource('users', UserController::class)->except('show');
-    });
-
+            Route::resource('users', UserController::class)->except('show');
+        });
 });

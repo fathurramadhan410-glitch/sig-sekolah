@@ -1,169 +1,185 @@
-@php
-    $teks = [
-        'npsn' => 'NPSN (8 digit)',
-        'nama' => 'Nama Sekolah',
-        'kecamatan' => 'Kecamatan',
-        'telepon' => 'Telepon',
-    ];
-    $pilihan = [
-        'jenjang' => ['SD', 'SMP', 'SMA', 'SMK'],
-        'status' => ['Negeri', 'Swasta'],
-    ];
-    $cls = 'w-full border rounded px-3 py-2';
-@endphp
+@csrf
 
-<div class="bg-white rounded shadow p-6 grid md:grid-cols-2 gap-6">
-    <div class="space-y-4">
-        @foreach ($teks as $name => $label)
-            <div>
-                <label for="{{ $name }}" class="block font-medium">
-                    {{ $label }}
-                </label>
-               <input type="text" id="{{ $name }}" name="{{ $name }}"
-                value="{{ old($name, $sekolah->$name) }}"
-                @readonly($name === 'npsn' && auth()->user()->isSekolah())
-                class="{{ $cls }}">
+<div style="margin-bottom: 12px;">
+    <label for="npsn" style="display: block; margin-bottom: 4px;">NPSN</label>
+    <input type="text" id="npsn" name="npsn" value="{{ old('npsn', $sekolah->npsn ?? '') }}" required
+           style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">
+    @error('npsn') <small style="color: #dc2626;">{{ $message }}</small> @enderror
+</div>
 
-                @error($name)
-                    <p class="text-red-600 text-sm">{{ $message }}</p>
-                @enderror
-            </div>
-        @endforeach
+<div style="margin-bottom: 12px;">
+    <label for="nama" style="display: block; margin-bottom: 4px;">Nama Sekolah</label>
+    <input type="text" id="nama" name="nama" value="{{ old('nama', $sekolah->nama ?? '') }}" required
+           style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">
+    @error('nama') <small style="color: #dc2626;">{{ $message }}</small> @enderror
+</div>
 
-        @foreach ($pilihan as $name => $opsi)
-            <div>
-                <label for="{{ $name }}" class="block font-medium">
-                    {{ ucfirst($name) }}
-                </label>
-                <select id="{{ $name }}" name="{{ $name }}"
-                    class="{{ $cls }}">
-                    <option value="">-- Pilih --</option>
-                    @foreach ($opsi as $o)
-                        <option value="{{ $o }}"
-                            @selected(old($name, $sekolah->$name) === $o)>
-                            {{ $o }}
-                        </option>
-                    @endforeach
-                </select>
-                @error($name)
-                    <p class="text-red-600 text-sm">{{ $message }}</p>
-                @enderror
-            </div>
-        @endforeach
-
-        <div>
-            <label for="alamat" class="block font-medium">Alamat</label>
-            <textarea id="alamat" name="alamat" rows="3"
-                class="{{ $cls }}">{{ old('alamat', $sekolah->alamat) }}</textarea>
-            @error('alamat')
-                <p class="text-red-600 text-sm">{{ $message }}</p>
-            @enderror
-        </div>
+<div style="display: flex; gap: 12px; margin-bottom: 12px;">
+    <div style="flex: 1;">
+        <label for="jenjang" style="display: block; margin-bottom: 4px;">Jenjang</label>
+        <select id="jenjang" name="jenjang" required
+                style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">
+            <option value="">-- Pilih Jenjang --</option>
+            @foreach (['SD', 'SMP', 'SMA', 'SMK'] as $j)
+                <option value="{{ $j }}" @selected(old('jenjang', $sekolah->jenjang ?? '') === $j)>{{ $j }}</option>
+            @endforeach
+        </select>
+        @error('jenjang') <small style="color: #dc2626;">{{ $message }}</small> @enderror
     </div>
 
-    <div class="space-y-4">
-        <div class="flex items-center justify-between">
-            <p class="font-medium">
-                Klik peta atau geser marker untuk menentukan lokasi
-            </p>
-            <!-- Tombol Latihan Mandiri: Gunakan Lokasi Saya -->
-            <button type="button" id="btn-lokasi" class="px-3 py-1 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700">
-                📍 Gunakan Lokasi Saya
-            </button>
-        </div>
+    <div style="flex: 1;">
+        <label for="status" style="display: block; margin-bottom: 4px;">Status</label>
+        <select id="status" name="status" required
+                style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">
+            <option value="">-- Pilih Status --</option>
+            @foreach (['Negeri', 'Swasta'] as $st)
+                <option value="{{ $st }}" @selected(old('status', $sekolah->status ?? '') === $st)>{{ $st }}</option>
+            @endforeach
+        </select>
+        @error('status') <small style="color: #dc2626;">{{ $message }}</small> @enderror
+    </div>
+</div>
 
-        <div id="map-picker" style="height: 400px; width: 100%;"></div>
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label for="latitude" class="block font-medium">Latitude</label>
-                <input type="number" step="any" id="latitude" name="latitude"
-                    value="{{ old('latitude', $sekolah->latitude) }}"
-                    class="{{ $cls }}">
-                @error('latitude')
-                    <p class="text-red-600 text-sm">{{ $message }}</p>
-                @enderror
-            </div>
-            <div>
-                <label for="longitude" class="block font-medium">Longitude</label>
-                <input type="number" step="any" id="longitude" name="longitude"
-                    value="{{ old('longitude', $sekolah->longitude) }}"
-                    class="{{ $cls }}">
-                @error('longitude')
-                    <p class="text-red-600 text-sm">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
+<div style="display: flex; gap: 12px; margin-bottom: 12px;">
+    <div style="flex: 1;">
+        <label for="kecamatan" style="display: block; margin-bottom: 4px;">Kecamatan</label>
+        <select id="kecamatan" name="kecamatan" required
+                style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">
+            <option value="">-- Pilih Kecamatan --</option>
+            @foreach (['Banjarmasin Utara', 'Banjarmasin Selatan', 'Banjarmasin Tengah', 'Banjarmasin Barat', 'Banjarmasin Timur'] as $kec)
+                <option value="{{ $kec }}" @selected(old('kecamatan', $sekolah->kecamatan ?? '') === $kec)>{{ $kec }}</option>
+            @endforeach
+        </select>
+        @error('kecamatan') <small style="color: #dc2626;">{{ $message }}</small> @enderror
+    </div>
 
-        <div class="flex gap-3 pt-2">
-            <button type="submit"
-                class="px-5 py-2 bg-blue-700 text-white rounded">
-                Simpan
-            </button>
-            <a href="{{ auth()->user()->isDinas()
-                ? route('dinas.sekolah.index')
-                : route('dashboard') }}"
-                class="px-5 py-2 bg-gray-300 rounded">Batal</a>
+    <div style="flex: 1;">
+        <label for="telepon" style="display: block; margin-bottom: 4px;">Telepon</label>
+        <input type="text" id="telepon" name="telepon" value="{{ old('telepon', $sekolah->telepon ?? '') }}"
+               style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">
+        @error('telepon') <small style="color: #dc2626;">{{ $message }}</small> @enderror
+    </div>
+</div>
+
+<div style="margin-bottom: 12px;">
+    <label style="display: block; margin-bottom: 4px;">Pilih Lokasi Sekolah pada Peta (Klik atau geser marker)</label>
+    <div id="peta-form" style="height: 280px; border: 1px solid #d1d5db; border-radius: 6px; margin-bottom: 8px;"></div>
+
+    <div style="display: flex; gap: 12px;">
+        <div style="flex: 1;">
+            <label for="latitude" style="display: block; margin-bottom: 4px;">Latitude</label>
+            <input type="text" id="latitude" name="latitude"
+                   value="{{ old('latitude', $sekolah->latitude ?? '') }}" required
+                   style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">
+            @error('latitude') <small style="color: #dc2626;">{{ $message }}</small> @enderror
+        </div>
+        <div style="flex: 1;">
+            <label for="longitude" style="display: block; margin-bottom: 4px;">Longitude</label>
+            <input type="text" id="longitude" name="longitude"
+                   value="{{ old('longitude', $sekolah->longitude ?? '') }}" required
+                   style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">
+            @error('longitude') <small style="color: #dc2626;">{{ $message }}</small> @enderror
         </div>
     </div>
 </div>
 
-@push('scripts')
-<script>
-    const latInput = document.getElementById('latitude');
-    const lngInput = document.getElementById('longitude');
-    const sudahAda = latInput.value !== '' && lngInput.value !== '';
-    const pusat = sudahAda
-        ? [parseFloat(latInput.value), parseFloat(lngInput.value)]
-        : [-3.3194, 114.5908]; // pusat Kota Banjarmasin
-    const map = L.map('map-picker').setView(pusat, sudahAda ? 16 : 13);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-    const marker = L.marker(pusat, { draggable: true }).addTo(map);
+<div style="margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <label for="alamat">Alamat Lengkap</label>
+        <button type="button" id="btn-isi-alamat"
+                style="padding: 5px 10px; background: #2563eb; color: #fff; border: 0; border-radius: 4px; font-size: 12px; cursor: pointer;">
+            Isi alamat dari peta
+        </button>
+    </div>
+    <textarea id="alamat" name="alamat" rows="2" required
+              style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;">{{ old('alamat', $sekolah->alamat ?? '') }}</textarea>
+    @error('alamat') <small style="color: #dc2626;">{{ $message }}</small> @enderror
+</div>
 
-    function isiKoordinat(lat, lng) {
-        latInput.value = lat.toFixed(7);
-        lngInput.value = lng.toFixed(7);
+<div style="display: flex; gap: 8px;">
+    <button type="submit"
+            style="padding: 8px 16px; background: #1e3a8a; color: #fff; border: 0; border-radius: 6px; cursor: pointer;">
+        Simpan
+    </button>
+    <a href="{{ route('dinas.sekolah.index') }}"
+       style="padding: 8px 16px; background: #6b7280; color: #fff; text-decoration: none; border-radius: 6px;">
+        Batal
+    </a>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const inputLat = document.getElementById('latitude');
+    const inputLng = document.getElementById('longitude');
+
+    const latAwal = parseFloat(inputLat.value) || -3.3186;
+    const lngAwal = parseFloat(inputLng.value) || 114.5944;
+
+    const mapForm = L.map('peta-form').setView([latAwal, lngAwal], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(mapForm);
+
+    let marker = null;
+
+    function perbaruiKoordinat(lat, lng) {
+        inputLat.value = lat.toFixed(6);
+        inputLng.value = lng.toFixed(6);
+
+        if (marker) {
+            marker.setLatLng([lat, lng]);
+        } else {
+            marker = L.marker([lat, lng], { draggable: true }).addTo(mapForm);
+            marker.on('dragend', (e) => {
+                const pos = e.target.getLatLng();
+                perbaruiKoordinat(pos.lat, pos.lng);
+            });
+        }
     }
 
-    map.on('click', (e) => {
-        marker.setLatLng(e.latlng);
-        isiKoordinat(e.latlng.lat, e.latlng.lng);
+    // Jika sedang mode edit (koordinat sudah ada), tampilkan marker awal
+    if (inputLat.value && inputLng.value) {
+        perbaruiKoordinat(parseFloat(inputLat.value), parseFloat(inputLng.value));
+    }
+
+    // Klik peta untuk memindahkan marker & mengisi koordinat
+    mapForm.on('click', (e) => {
+        perbaruiKoordinat(e.latlng.lat, e.latlng.lng);
     });
 
-    marker.on('dragend', () => {
-        const p = marker.getLatLng();
-        isiKoordinat(p.lat, p.lng);
-    });
+    // Tombol Isi alamat dari peta (Reverse Geocoding Nominatim)
+    document.getElementById('btn-isi-alamat').addEventListener('click', async function () {
+        const lat = inputLat.value.trim();
+        const lng = inputLng.value.trim();
 
-    [latInput, lngInput].forEach((el) => {
-        el.addEventListener('change', () => {
-            const lat = parseFloat(latInput.value);
-            const lng = parseFloat(lngInput.value);
-            if (!isNaN(lat) && !isNaN(lng)) {
-                marker.setLatLng([lat, lng]);
-                map.setView([lat, lng], 16);
+        if (!lat || !lng) {
+            alert('Silakan klik lokasi sekolah pada peta terlebih dahulu.');
+            return;
+        }
+
+        this.disabled = true;
+        const teksAwal = this.textContent;
+        this.textContent = 'Mengambil alamat...';
+
+        try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&accept-language=id&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`;
+            const respon = await fetch(url);
+            if (!respon.ok) throw new Error('HTTP ' + respon.status);
+
+            const data = await respon.json();
+            if (data.display_name) {
+                document.getElementById('alamat').value = data.display_name;
+            } else {
+                alert('Alamat tidak ditemukan untuk koordinat tersebut.');
             }
-        });
-    });
-
-    // Script Latihan Mandiri: Tombol Gunakan Lokasi Saya
-    document.getElementById('btn-lokasi').addEventListener('click', () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                latInput.value = lat.toFixed(7);
-                lngInput.value = lng.toFixed(7);
-                marker.setLatLng([lat, lng]);
-                map.setView([lat, lng], 16);
-            }, (error) => {
-                alert('Gagal mendeteksi lokasi: ' + error.message);
-            });
-        } else {
-            alert('Geolocation tidak didukung oleh browser Anda.');
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengambil alamat otomatis dari Nominatim.');
+        } finally {
+            this.disabled = false;
+            this.textContent = teksAwal;
         }
     });
 </script>
-@endpush
