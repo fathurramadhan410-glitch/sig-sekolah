@@ -4,12 +4,14 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PetaController;
 use App\Http\Controllers\SekolahController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfilSekolahController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SekolahPublikController;
+
 
 // Publik
 Route::controller(PetaController::class)->group(function () {
@@ -24,6 +26,33 @@ Route::controller(PetaController::class)->group(function () {
     Route::get('/alamat', 'alamat')->name('peta.alamat');
 
 });
+
+Route::get('/health', function () {
+    $start = microtime(true);
+
+    try {
+        DB::connection()->getPdo();
+        $totalSekolah = DB::table('sekolahs')->count();
+        $latencyMs = round((microtime(true) - $start) * 1000, 2);
+
+        return response()->json([
+            'status' => 'healthy',
+            'app' => config('app.name'),
+            'database' => 'connected',
+            'db_latency_ms' => $latencyMs,
+            'total_sekolah' => $totalSekolah,
+            'timestamp' => now()->toIso8601String(),
+        ], 200);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'unhealthy',
+            'database' => 'disconnected',
+            'error' => $e->getMessage(),
+        ], 503);
+    }
+})->name('health');
+
+Route::get('/data/sekolah/sekitar', [PetaController::class, 'sekitar'])->name('sekolah.sekitar');
 
 Route::get('/sekolah/{sekolah}', [SekolahPublikController::class, 'show'])
     ->name('sekolah.show');
