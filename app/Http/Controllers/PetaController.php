@@ -129,4 +129,18 @@ class PetaController extends Controller
             'features' => $features,
         ]);
     }
+
+    public function sekitar(Request $request)
+    {
+        $lat = (float) $request->query('lat');
+        $lng = (float) $request->query('lng');
+        $radiusMeter = 1000; // 1 km
+
+        $sekolahSekitar = Sekolah::whereRaw(
+            'ST_DWithin(lokasi, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)',
+            [$lng, $lat, $radiusMeter]
+        )->get();
+
+        return response()->json($sekolahSekitar);
+    }
 }

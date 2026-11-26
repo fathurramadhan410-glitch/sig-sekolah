@@ -6,6 +6,7 @@ use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -40,6 +41,13 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'role' => Role::class,
         ];
+    }
+
+    protected function email(): Attribute
+    {
+    return Attribute::make(
+        set: fn (string $value) => strtolower(trim($value)),
+    );
     }
 
     public function sekolah(): BelongsTo
